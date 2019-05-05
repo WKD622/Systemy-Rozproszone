@@ -1,0 +1,27 @@
+syntax="proto";
+
+option java_multiple_files=true;
+option java_package="proto_gen";
+option java_outer_classname="ExchangeRateProto";
+option objc_class_prefix="HLW";
+
+package exchange_rates;
+
+enum CurrencyType{
+    PLN=0;
+    EUR=1;
+    GBP=2;
+}
+
+message ExchangeRateOpArguments{
+    CurrencyType arg=1;
+}
+
+message ExchangeRateOpResult{
+    double res=1;
+}
+
+service ExchangeRateService{
+    rpc getExchangeRate (ExchangeRateOpArguments) returns (stream ExchangeRateOpResult){
+    }
+}

@@ -4,7 +4,11 @@ import com.zeroc.Ice.Current;
 import generated.AccountType;
 import generated.Bank;
 import generated.Client;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import pom.MessagesTypes;
+import proto_gen.CurrencyType;
+import proto_gen.ExchangeRateServiceGrpc;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +18,15 @@ import static com.zeroc.Ice.Util.stringToIdentity;
 public class BankI implements Bank {
     private Map<Client, AccountI> clients = new HashMap<>();
     private Map<AccountI, String> accounts = new HashMap<>();
+    private final ManagedChannel channel;
+    private final ExchangeRateServiceGrpc.ExchangeRateServiceBlockingStub calcBlockingStub;
+    private final ExchangeRateServiceGrpc.ExchangeRateServiceStub calcNonBlockingStub;
+
+    public BankI(String host, int port) {
+        channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext(true).build();
+        calcBlockingStub = proto_gen.ExchangeRateServiceGrpc.newBlockingStub(channel);
+        calcNonBlockingStub = ExchangeRateServiceGrpc.newStub(channel);
+    }
 
     @Override
     public String showClients(Current current) {
@@ -26,13 +39,24 @@ public class BankI implements Bank {
 
     @Override
     public String takeLoan(long value, int months, String currency, Current current) {
-        double cost = 1.05;
-        String pesel = current.ctx.get("pesel");
-        for (AccountI accountI : accounts.keySet()) {
-            if (accountI.getPesel(current).equals(pesel) && accountI.getAccountType(current).equals(AccountType.Premium.toString())) {
-                StringBuilder info = new StringBuilder();
-                accountI.addIncome(value, current);
-                return info.append("monthly installment: ").append((value * cost) / months).toString();
+        if (currency.contains("PLN") || currency.contains("GBP") || currency.contains("EUR")) {
+            String pesel = current.ctx.get("pesel");
+            for (AccountI accountI : accounts.keySet()) {
+                if (accountI.getPesel(current).equals(pesel) && accountI.getAccountType(current).equals(AccountType.Premium.toString())) {
+                    CurrencyType currencyType;
+                    if (currency.contains("GBP")) {
+                        currencyType = CurrencyType.GBP;
+                    } else if (currency.contains("EUR")) {
+                        currencyType = CurrencyType.EUR;
+                    } else {
+                        currencyType = CurrencyType.PLN;
+                    }
+                    proto_gen.ExchangeRateOpArguments request = proto_gen.ExchangeRateOpArguments.newBuilder().setArg(currencyType).build();
+                    double result = calcBlockingStub.getExchangeRate(request).next().getRes();
+                    StringBuilder info = new StringBuilder();
+                    accountI.addIncome((long) (value * result), current);
+                    return info.append("monthly installment: ").append((value * result) / months).toString();
+                }
             }
         }
         return MessagesTypes.ERROR;

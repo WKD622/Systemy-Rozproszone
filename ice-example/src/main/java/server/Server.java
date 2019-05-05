@@ -30,7 +30,7 @@ public class Server {
                 }
             }
             for (String bankName : bankNames) {
-                BankI object = new BankI();
+                BankI object = new BankI("localhost",50052);
                 adapter.add(object, stringToIdentity(bankName));
                 adapter.activate();
                 System.out.println(bankName + " opened.");
