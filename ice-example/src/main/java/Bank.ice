@@ -40,6 +40,5 @@ module generated
         bool checkIfPasswordCorrect();
 
         string getAccountType();
-
     }
 }

@@ -19,7 +19,7 @@ message ExchangeRateOpArguments{
 
 message ExchangeRateOpResult{
     double res=1;
-}
+ }
 
 service ExchangeRateService{
     rpc getExchangeRate (ExchangeRateOpArguments) returns (stream ExchangeRateOpResult){

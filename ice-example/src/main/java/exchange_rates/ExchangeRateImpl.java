@@ -8,7 +8,6 @@ import proto_gen.ExchangeRateServiceGrpc;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 public class ExchangeRateImpl extends ExchangeRateServiceGrpc.ExchangeRateServiceImplBase {
     private Map<proto_gen.CurrencyType, Double> rates = new HashMap<>();
